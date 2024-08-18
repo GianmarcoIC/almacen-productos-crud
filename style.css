@@ -1,0 +1,13 @@
+body {
+    font-family: 'Arial', sans-serif;
+}
+
+h1 {
+    color: #2E86C1;
+}
+
+button {
+    background-color: #2E86C1;
+    color: white;
+    border-radius: 5px;
+}
