@@ -1,99 +1,60 @@
 import streamlit as st
-from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, select
+from sqlalchemy import create_engine, Column, Integer, String, MetaData, Table
 from sqlalchemy.orm import sessionmaker
+from database import init_db, Item
 
-# Configuración de la base de datos en un servidor en la nube (ejemplo)
-# Reemplaza 'usuario', 'contraseña', 'host', 'puerto', y 'almacen_db' con tus datos reales
-engine = create_engine('mysql+pymysql://usuario:contraseña@host:puerto/almacen_db')
+# Inicializar la base de datos
+engine = init_db()
 Session = sessionmaker(bind=engine)
 session = Session()
-metadata = MetaData()
 
-# Definición de la tabla productos
-productos = Table(
-    'productos', metadata,
-    Column('id', Integer, primary_key=True),
-    Column('nombre', String(100)),
-    Column('descripcion', String(255)),
-    Column('precio', Integer),
-    Column('cantidad', Integer)
-)
+# Aplicar estilo CSS
+st.markdown('<style>{}</style>'.format(open('style.css').read()), unsafe_allow_html=True)
 
-# Función principal para manejar la navegación y las operaciones CRUD
-def main():
-    st.title("Gestión de Almacén")
-    st.sidebar.title("Operaciones CRUD")
-    opcion = st.sidebar.selectbox("Seleccione una operación", ["Ver Productos", "Agregar Producto", "Editar Producto", "Eliminar Producto"])
+# Título
+st.title("Gestión de Almacén")
 
-    if opcion == "Ver Productos":
-        ver_productos()
-    elif opcion == "Agregar Producto":
-        agregar_producto()
-    elif opcion == "Editar Producto":
-        editar_producto()
-    elif opcion == "Eliminar Producto":
-        eliminar_producto()
+# Operaciones CRUD
 
-# Función para ver todos los productos
-def ver_productos():
-    st.subheader("Lista de Productos")
-    query = select([productos])
-    result = session.execute(query).fetchall()
-    st.table(result)
-
-# Función para agregar un nuevo producto
-def agregar_producto():
-    st.subheader("Agregar Nuevo Producto")
-    nombre = st.text_input("Nombre del Producto")
-    descripcion = st.text_area("Descripción")
-    precio = st.number_input("Precio", min_value=0.0, step=0.1)
-    cantidad = st.number_input("Cantidad", min_value=0)
-
-    if st.button("Agregar Producto"):
-        ins = productos.insert().values(nombre=nombre, descripcion=descripcion, precio=precio, cantidad=cantidad)
-        session.execute(ins)
+# Crear un nuevo ítem
+if st.button("Agregar Ítem"):
+    nombre = st.text_input("Nombre del Ítem")
+    cantidad = st.number_input("Cantidad", min_value=0, step=1)
+    if st.button("Guardar"):
+        nuevo_item = Item(nombre=nombre, cantidad=cantidad)
+        session.add(nuevo_item)
         session.commit()
-        st.success("Producto agregado exitosamente")
+        st.success("Ítem agregado correctamente")
 
-# Función para editar un producto existente
-def editar_producto():
-    st.subheader("Editar Producto")
-    id_producto = st.number_input("ID del Producto a Editar", min_value=1, step=1)
-    
-    if id_producto:
-        query = select([productos]).where(productos.c.id == id_producto)
-        producto = session.execute(query).fetchone()
-        
-        if producto:
-            nombre = st.text_input("Nombre del Producto", value=producto['nombre'])
-            descripcion = st.text_area("Descripción", value=producto['descripcion'])
-            precio = st.number_input("Precio", min_value=0.0, step=0.1, value=producto['precio'])
-            cantidad = st.number_input("Cantidad", min_value=0, value=producto['cantidad'])
+# Leer ítems
+st.subheader("Lista de Ítems")
+items = session.query(Item).all()
+for item in items:
+    st.write(f"ID: {item.id}, Nombre: {item.nombre}, Cantidad: {item.cantidad}")
 
-            if st.button("Actualizar Producto"):
-                update = productos.update().where(productos.c.id == id_producto).values(
-                    nombre=nombre,
-                    descripcion=descripcion,
-                    precio=precio,
-                    cantidad=cantidad
-                )
-                session.execute(update)
-                session.commit()
-                st.success("Producto actualizado exitosamente")
-        else:
-            st.error("Producto no encontrado")
-
-# Función para eliminar un producto
-def eliminar_producto():
-    st.subheader("Eliminar Producto")
-    id_producto = st.number_input("ID del Producto a Eliminar", min_value=1, step=1)
-    
-    if st.button("Eliminar Producto"):
-        delete = productos.delete().where(productos.c.id == id_producto)
-        session.execute(delete)
+# Actualizar un ítem
+st.subheader("Actualizar Ítem")
+id_actualizar = st.number_input("ID del Ítem a actualizar", min_value=1, step=1)
+nuevo_nombre = st.text_input("Nuevo Nombre del Ítem")
+nueva_cantidad = st.number_input("Nueva Cantidad", min_value=0, step=1)
+if st.button("Actualizar"):
+    item_a_actualizar = session.query(Item).filter_by(id=id_actualizar).first()
+    if item_a_actualizar:
+        item_a_actualizar.nombre = nuevo_nombre
+        item_a_actualizar.cantidad = nueva_cantidad
         session.commit()
-        st.success("Producto eliminado exitosamente")
+        st.success("Ítem actualizado correctamente")
+    else:
+        st.error("Ítem no encontrado")
 
-# Ejecutar la aplicación
-if __name__ == "__main__":
-    main()
+# Eliminar un ítem
+st.subheader("Eliminar Ítem")
+id_eliminar = st.number_input("ID del Ítem a eliminar", min_value=1, step=1)
+if st.button("Eliminar"):
+    item_a_eliminar = session.query(Item).filter_by(id=id_eliminar).first()
+    if item_a_eliminar:
+        session.delete(item_a_eliminar)
+        session.commit()
+        st.success("Ítem eliminado correctamente")
+    else:
+        st.error("Ítem no encontrado")
