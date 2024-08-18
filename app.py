@@ -1,9 +1,8 @@
 import streamlit as st
-from sqlalchemy import create_engine, Column, Integer, String, MetaData, Table
 from sqlalchemy.orm import sessionmaker
 from database import init_db, Item
 
-# Inicializar la base de datos
+# Inicializar la base de datos y crear la sesión
 engine = init_db()
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -11,10 +10,8 @@ session = Session()
 # Aplicar estilo CSS
 st.markdown('<style>{}</style>'.format(open('style.css').read()), unsafe_allow_html=True)
 
-# Título
+# Título de la aplicación
 st.title("Gestión de Almacén")
-
-# Operaciones CRUD
 
 # Crear un nuevo ítem
 if st.button("Agregar Ítem"):
