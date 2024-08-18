@@ -14,7 +14,21 @@ class Item(Base):
 
 # Función para inicializar la base de datos
 def init_db():
-    database_url = os.getenv('postgresql://postgres:ibBPwUDErJYUSAtGTlOjncsqBDZnBFEa@autorack.proxy.rlwy.net:25567/railway')  # Obtiene la URL de la base de datos desde las variables de entorno
-    engine = create_engine(database_url)  # Crea una instancia del motor de la base de datos
-    Base.metadata.create_all(engine)  # Crea todas las tablas en la base de datos
-    return engine
+    database_url = os.getenv('postgresql://postgres:ibBPwUDErJYUSAtGTlOjncsqBDZnBFEa@autorack.proxy.rlwy.net:25567/railway')
+    
+    # Verifica si la URL está correctamente cargada
+    if not database_url:
+        raise ValueError("DATABASE_URL no está configurada. Por favor, revisa las variables de entorno.")
+
+    # Intentar crear el engine con la URL proporcionada
+    try:
+        engine = create_engine(database_url, echo=True)
+        Base.metadata.create_all(engine)
+        return engine
+    except Exception as e:
+        raise ValueError(f"Error al crear el engine de la base de datos: {str(e)}")
+
+# Inicializa la base de datos y crea la sesión
+engine = init_db()
+Session = sessionmaker(bind=engine)
+session = Session()
