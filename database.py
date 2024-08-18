@@ -11,7 +11,7 @@ class Item(Base):
     cantidad = Column(Integer, nullable=False)
 
 def init_db():
-    database_url = os.getenv('DATABASE_URL')
+    database_url = os.getenv('postgresql://postgres:ibBPwUDErJYUSAtGTlOjncsqBDZnBFEa@autorack.proxy.rlwy.net:25567/railway')
     engine = create_engine(database_url)
     Base.metadata.create_all(engine)
     return engine
